@@ -41,31 +41,44 @@ Set-VMNetworkAdapter -VMName $NewVMName -StaticMacAddress $NewVMMac
 If(($OriginalVM | Get-VMHardDiskDrive).Path -ilike "*.vhdx"){
     Write-Host "Backing Up $VMVHDX"
     $VMVHDX = ($OriginalVM | Get-VMHardDiskDrive).Path
-    Copy-Item $VMVHDX -Destination "$VMVHDX.Old"
+    Copy-Item $VMVHDX -Destination "$VMVHDX.Old" -verbose
 }Else{
     Write-Host "No VHDX found to backup" -foreground Red
+    Exit -1
 }
 
-$DiskNumber = (Mount-VHD -Path ($OriginalVM | Get-VMHardDiskDrive).Path -PassThru | Get-Disk).Number
+Write-Host "Mounting $VMVHDX"
+$DiskNumber = (Mount-VHD -Path $VMVHDX -PassThru | Get-Disk).Number
+
+Write-Host "Converting Disk $DiskNumber to GPT "
 Start-Process "$env:windir\system32\MBR2GPT.EXE" -ArgumentList "/convert /allowFullOS /disk:$DiskNumber" -Wait
+
+Write-Host "Dismounting $VMVHDX"
 Dismount-VHD -DiskNumber $DiskNumber
-Get-VM $NewVMName | Add-VMHardDiskDrive -Path ($OriginalVM | Get-VMHardDiskDrive).Path
+
+Write-Host "Attaching $VMVHDX"
+Get-VM $NewVMName | Add-VMHardDiskDrive -Path $VMVHDX
 
 if(!(Get-HgsGuardian UntrustedGuardian -ErrorAction SilentlyContinue -WarningAction SilentlyContinue))
 {
     #Create Guardian
+    Write-Host "Creating UntrustedGuardian"
     New-HgsGuardian UntrustedGuardian -GenerateCertificates
 }
 #Create Key
+Write-Host "Creating KeyProtector"
 $Owner = Get-HgsGuardian UntrustedGuardian
 $HKP = New-HgsKeyProtector -Owner $Owner -AllowUntrustedRoot
 
 #Add VMKey to VM
+Write-Host "Setting KeyProtector on $NewVMName"
 Set-VMKeyProtector -VMName $NewVMName -KeyProtector $HKP.RawData
     
 #Enable vTPM
+Write-Host "Enabling vTPM on $NewVMName"
 Enable-VMTPM $NewVMName
 
 #Start VM
-
+Write-Host "Starting $NewVMName" -foreground Green
 Start-VM $NewVMName
+
