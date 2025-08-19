@@ -39,8 +39,11 @@ Write-Host "Set Mac Address to $NewVMMac"
 Set-VMNetworkAdapter -VMName $NewVMName -StaticMacAddress $NewVMMac
 
 If(($OriginalVM | Get-VMHardDiskDrive).Path -ilike "*.vhdx"){
+    Write-Host "Backing Up $VMVHDX"
     $VMVHDX = ($OriginalVM | Get-VMHardDiskDrive).Path
     Copy-Item $VMVHDX -Destination "$VMVHDX.Old"
+}Else{
+    Write-Host "No VHDX found to backup" -foreground Red
 }
 
 $DiskNumber = (Mount-VHD -Path ($OriginalVM | Get-VMHardDiskDrive).Path -PassThru | Get-Disk).Number
@@ -64,4 +67,5 @@ Set-VMKeyProtector -VMName $NewVMName -KeyProtector $HKP.RawData
 Enable-VMTPM $NewVMName
 
 #Start VM
+
 Start-VM $NewVMName
