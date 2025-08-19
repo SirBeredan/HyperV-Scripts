@@ -92,10 +92,12 @@ If($AllowedStart){
    Start-VM $NewVMName
 }Else{
    Write-Host "MBR2GPT.EXE is missing on this server OS. Please Complete the following" -foreground Yellow
-   Write-Host "Start $OriginalVMName" -foreground Yellow
+   Write-Host "Starting $OriginalVMName, Please Login once booted" -foreground Yellow
+   Start-VM $OriginalVMName
    Write-Host "From Comand Prompt Run the following Commands" -foreground Yellow
    Write-Host "MBR2GPT.EXE /convert /allowFullOS /disk:0"
    Write-Host "shutdown -s -f -t 0"
    Write-Host "Then start $NewVMName" -foreground Yellow
 }
+
 
