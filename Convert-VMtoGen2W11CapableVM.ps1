@@ -12,7 +12,7 @@ $vCPUCount = if($OriginalVM.ProcessorCount -eq 1){"2"}Else{$OriginalVM.Processor
 $VMStartyUpMemory = if($OriginalVM.MemoryStartup -le 4294967296){4294967296}Else{$OriginalVM.MemoryStartup}
 
 Write-Host "Creating VM"
-New-VM -Name $NewVMName -MemoryStartupBytes $VMStartyUpMemory -Generation 2 -Path $OriginalVM.Path -BootDevice NetworkAdapter -SwitchName $VMSwitch -NoVHD -ErrorAction Stop –Verbose
+New-VM -Name $NewVMName -MemoryStartupBytes $VMStartyUpMemory -Generation 2 -Path $OriginalVM.Path -BootDevice NetworkAdapter -SwitchName $VMSwitch -NoVHD -ErrorAction Stop -Verbose
 
 Write-Host "Setting Common Settings"
 Set-VM -Name $NewVMName -ProcessorCount $vCPUCount -SmartPagingFilePath $OriginalVM.SmartPagingFilePath -SnapshotFileLocation $OriginalVM.SnapshotFileLocation -AutomaticStartAction $OriginalVM.AutomaticStartAction -AutomaticStopAction $OriginalVM.AutomaticStartAction -Notes $OriginalVM.Notes
@@ -99,5 +99,6 @@ If($AllowedStart){
    Write-Host "shutdown -s -f -t 0"
    Write-Host "Then start $NewVMName" -foreground Yellow
 }
+
 
 
